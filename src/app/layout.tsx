@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NanoThumb - Revolutionary AI-Powered Thumbnails",
-  description: "Generate breathtaking YouTube thumbnails in seconds. Powered by The Nano Banana Pro API.",
+  title: "Thumby - Revolutionary AI-Powered Thumbnails",
+  description: "Generate breathtaking YouTube thumbnails in seconds. Powered by advanced AI.",
 };
 
 export default function RootLayout({

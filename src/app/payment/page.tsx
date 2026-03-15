@@ -35,7 +35,7 @@ export default function PaymentPage() {
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", position: "relative" }}>
       <div style={{ position: "absolute", top: 24, left: 24 }}>
         <Link href="/" className="logo">
-          <span className="gradient-text">NanoThumb</span> ✦
+          <span className="gradient-text">Thumby</span> ✦
         </Link>
       </div>
       

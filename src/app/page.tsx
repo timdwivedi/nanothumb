@@ -6,7 +6,7 @@ export default function LandingPage() {
     <>
       <header className="container header">
         <div className="logo">
-          <span className="gradient-text">NanoThumb</span> ✦
+          <span className="gradient-text">Thumby</span> ✦
         </div>
         <nav className="nav-links">
           <Link href="#features" className="nav-item">Features</Link>
@@ -106,7 +106,7 @@ export default function LandingPage() {
              <div>
                <h2 style={{ fontSize: "40px", marginBottom: "24px", lineHeight: "1.2" }}>Elevate Your CTR with <span className="gradient-text">Cinematic</span> Thumbnails</h2>
                <p style={{ fontSize: "18px", color: "var(--text-muted)", marginBottom: "32px", lineHeight: "1.6" }}>
-                 NanoThumb isn't just an image generator; it's a personalized thumbnail studio built for YouTube dominance. It automatically handles complex lighting engines to match your face model perfectly to entirely new neon-lit scenes.
+                 Thumby isn't just an image generator; it's a personalized thumbnail studio built for YouTube dominance. It automatically handles complex lighting engines to match your face model perfectly to entirely new neon-lit scenes.
                </p>
                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "16px" }}>
                  <li style={{ display: "flex", gap: "12px", alignItems: "flex-start", fontSize: "16px" }}>
@@ -187,12 +187,12 @@ export default function LandingPage() {
 
       <footer className="container footer">
         <div className="logo" style={{ fontSize: "18px" }}>
-          <span className="gradient-text">NanoThumb</span>
+          <span className="gradient-text">Thumby</span>
         </div>
         <div style={{ color: "var(--text-muted)", fontSize: "14px", display: "flex", gap: "24px" }}>
           <Link href="#">Terms of Service</Link>
           <Link href="#">Privacy Policy</Link>
-          <span>© 2026 NanoThumb. All rights reserved.</span>
+          <span>© 2026 Thumby. All rights reserved.</span>
         </div>
       </footer>
     </>

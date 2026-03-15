@@ -40,7 +40,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside style={{ width: "260px", borderRight: "1px solid var(--border-card)", background: "rgba(0,0,0,0.2)", display: "flex", flexDirection: "column", padding: "24px" }}>
         <Link href="/" className="logo" style={{ marginBottom: "40px" }}>
-          <span className="gradient-text">NanoThumb</span> ✦
+          <span className="gradient-text">Thumby</span> ✦
         </Link>
         <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
           {links.map((link) => {
