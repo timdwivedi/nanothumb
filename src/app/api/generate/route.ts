@@ -7,19 +7,26 @@ const getDb = () => JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 const saveDb = (data: any) => fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
 
 export async function POST(req: Request) {
+  const userId = req.headers.get('x-user-id');
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const db = getDb();
   const body = await req.json();
   const { prompt, inspirationUrl } = body;
-  
-  const user = db.users[0]; // mock u1
-  
+
+  const userIndex = db.users.findIndex((u: any) => u.id === userId);
+  if (userIndex === -1) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+  const user = db.users[userIndex];
+
   if (user.credits < 3) {
     return NextResponse.json({ error: "You've used all your free thumbnails.", outOfCredits: true }, { status: 400 });
   }
 
   // Deduct 3 credits
-  user.credits -= 3;
+  db.users[userIndex].credits -= 3;
   saveDb(db);
+  user.credits = db.users[userIndex].credits;
 
   // Grab the Nano Banana Key given by the user in the .env.local file
   const NANO_BANANA_KEY = process.env.NANO_BANANA_API_KEY;

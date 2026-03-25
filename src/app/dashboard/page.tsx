@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Download, Play } from "lucide-react";
 import Link from "next/link";
+import { authHeaders } from "@/lib/auth";
 
 interface Thumbnail {
   id: string;
@@ -14,7 +15,7 @@ export default function DashboardHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/thumbnails")
+    fetch("/api/thumbnails", { headers: authHeaders() })
       .then((res) => res.json())
       .then((data) => {
         setThumbnails(data.thumbnails);

@@ -5,18 +5,31 @@ import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLogin) {
-      // Give new users 9 free credits (3 free thumbnail generations)
-      await fetch("/api/user", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credits: 9 }),
-      });
+    setError("");
+    setLoading(true);
+
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: isLogin ? "login" : "signup", email, password }),
+    });
+    const data = await res.json();
+    setLoading(false);
+
+    if (data.error) {
+      setError(data.error);
+      return;
     }
+
+    localStorage.setItem("userId", data.userId);
     router.push("/dashboard");
   };
 
@@ -32,30 +45,34 @@ export default function AuthPage() {
           {isLogin ? "Welcome Back" : "Start Generating"}
         </h2>
         <p style={{ textAlign: "center", color: "var(--text-muted)", marginBottom: "32px", fontSize: "14px" }}>
-          {isLogin ? "Sign in to access your dashboard" : "Create an account to get started"}
+          {isLogin ? "Sign in to access your dashboard" : "Create an account — 3 free thumbnails included"}
         </p>
 
         <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
             <label className="input-label">Email Address</label>
-            <input type="email" placeholder="you@example.com" required />
+            <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div>
             <label className="input-label">Password</label>
-            <input type="password" placeholder="••••••••" required />
+            <input type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
 
-          <button type="submit" className="btn-primary" style={{ marginTop: "12px" }}>
-            {isLogin ? "Sign In" : "Sign Up"}
+          {error && (
+            <div style={{ color: "var(--accent-pink)", fontSize: "14px", textAlign: "center" }}>{error}</div>
+          )}
+
+          <button type="submit" className="btn-primary" style={{ marginTop: "12px" }} disabled={loading}>
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up — Free"}
           </button>
         </form>
 
         <div style={{ marginTop: "24px", textAlign: "center", fontSize: "14px", color: "var(--text-muted)" }}>
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span 
-            className="gradient-text" 
+          <span
+            className="gradient-text"
             style={{ cursor: "pointer", fontWeight: "600" }}
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => { setIsLogin(!isLogin); setError(""); }}
           >
             {isLogin ? "Sign Up" : "Sign In"}
           </span>

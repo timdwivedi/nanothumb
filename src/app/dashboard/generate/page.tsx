@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { UploadCloud, Wand2, CheckCircle2, ChevronRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { authHeaders } from "@/lib/auth";
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function GeneratePage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
-    fetch("/api/user")
+    fetch("/api/user", { headers: authHeaders() })
       .then((res) => res.json())
       .then((data) => {
         setPrompt(data.user?.defaultPrompt || "");
@@ -42,7 +43,7 @@ export default function GeneratePage() {
     setOptions([]);
     const res = await fetch("/api/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ prompt, inspirationUrl: inspiration }),
     });
     const data = await res.json();
@@ -62,7 +63,7 @@ export default function GeneratePage() {
     setSaving(true);
     await fetch("/api/thumbnails", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ url: options[selectedOption] })
     });
     setSaving(false);

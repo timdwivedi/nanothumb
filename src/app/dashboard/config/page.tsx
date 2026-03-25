@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { UploadCloud, Save } from "lucide-react";
+import { authHeaders } from "@/lib/auth";
 
 export default function ConfigPage() {
   const [prompt, setPrompt] = useState("");
@@ -8,7 +9,7 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/user")
+    fetch("/api/user", { headers: authHeaders() })
       .then((res) => res.json())
       .then((data) => {
         setPrompt(data.user?.defaultPrompt || "");
@@ -22,7 +23,7 @@ export default function ConfigPage() {
     setSaving(true);
     await fetch("/api/user", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
       body: JSON.stringify({ defaultPrompt: prompt, faceImages: faceImage ? [faceImage] : [] })
     });
     setSaving(false);

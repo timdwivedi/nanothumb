@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Settings, Image as ImageIcon, LogOut, Coins } from "lucide-react";
+import { authHeaders } from "@/lib/auth";
 
 export default function DashboardLayout({
   children,
@@ -14,18 +15,20 @@ export default function DashboardLayout({
   const [credits, setCredits] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/user")
+    const userId = localStorage.getItem('userId');
+    if (!userId) { router.push('/auth'); return; }
+
+    fetch("/api/user", { headers: authHeaders() })
       .then((res) => res.json())
       .then((data) => {
-        if (data.user) {
-          setCredits(data.user.credits);
-        }
+        if (data.user) setCredits(data.user.credits);
+        if (data.error) router.push('/auth');
       })
       .catch((err) => console.error(err));
-  }, [pathname]); // Refreshes when navigating around
+  }, [pathname]);
 
   const handleSignOut = () => {
-    // In a production app with Supabase, you would call supabase.auth.signOut() here
+    localStorage.removeItem('userId');
     router.push("/");
   };
 
