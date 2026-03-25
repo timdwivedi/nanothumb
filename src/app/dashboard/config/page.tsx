@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { UploadCloud, Save } from "lucide-react";
-import { authHeaders } from "@/lib/auth";
+import { getCurrentUser, updateCurrentUser } from "@/lib/storage";
 
 export default function ConfigPage() {
   const [prompt, setPrompt] = useState("");
@@ -9,23 +9,16 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch("/api/user", { headers: authHeaders() })
-      .then((res) => res.json())
-      .then((data) => {
-        setPrompt(data.user?.defaultPrompt || "");
-        if (data.user?.faceImages?.length > 0) {
-          setFaceImage(data.user.faceImages[0]);
-        }
-      });
+    const user = getCurrentUser();
+    if (user) {
+      setPrompt(user.defaultPrompt || "");
+      if (user.faceImages?.length > 0) setFaceImage(user.faceImages[0]);
+    }
   }, []);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setSaving(true);
-    await fetch("/api/user", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({ defaultPrompt: prompt, faceImages: faceImage ? [faceImage] : [] })
-    });
+    updateCurrentUser({ defaultPrompt: prompt, faceImages: faceImage ? [faceImage] : [] });
     setSaving(false);
     alert("Settings saved successfully!");
   };
@@ -34,9 +27,7 @@ export default function ConfigPage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setFaceImage(e.target?.result as string);
-      };
+      reader.onload = (e) => setFaceImage(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
@@ -47,15 +38,13 @@ export default function ConfigPage() {
       <p style={{ color: "var(--text-muted)", marginBottom: "40px" }}>Set your default generation prompt and face models.</p>
 
       <div className="glass-card" style={{ marginBottom: "32px" }}>
-        <h2 style={{ fontSize: "20px", marginBottom: "16px", display: "flex", gap: "8px", alignItems: "center" }}>
-           Default Generation Prompt
-        </h2>
+        <h2 style={{ fontSize: "20px", marginBottom: "16px" }}>Default Generation Prompt</h2>
         <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
           This prompt will be combined with the inspiration thumbnail automatically.
         </p>
-        <textarea 
-          rows={4} 
-          value={prompt} 
+        <textarea
+          rows={4}
+          value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="e.g. Cinematic lighting, photorealistic, bold colors, maximum detail..."
           style={{ width: "100%" }}
@@ -67,17 +56,11 @@ export default function ConfigPage() {
         <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
           Upload high-quality images of your face for the AI to seamlessly integrate into thumbnails.
         </p>
-        
-        <label 
-          style={{ 
-            border: "2px dashed var(--border-card)", 
-            padding: "40px", 
-            borderRadius: "16px", 
-            textAlign: "center",
-            cursor: "pointer",
-            background: "transparent",
-            transition: "all 0.2s",
-            display: "block"
+
+        <label
+          style={{
+            border: "2px dashed var(--border-card)", padding: "40px", borderRadius: "16px",
+            textAlign: "center", cursor: "pointer", background: "transparent", transition: "all 0.2s", display: "block"
           }}
           onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
           onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border-card)"}

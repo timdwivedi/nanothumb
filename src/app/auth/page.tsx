@@ -2,35 +2,42 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getUsers, saveUsers } from "@/lib/storage";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    const users = getUsers();
 
-    const res = await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: isLogin ? "login" : "signup", email, password }),
-    });
-    const data = await res.json();
-    setLoading(false);
-
-    if (data.error) {
-      setError(data.error);
-      return;
+    if (isLogin) {
+      const user = users.find(u => u.email === email && u.password === password);
+      if (!user) { setError("Invalid email or password."); return; }
+      localStorage.setItem("userId", user.id);
+      router.push("/dashboard");
+    } else {
+      if (users.find(u => u.email === email)) {
+        setError("An account with this email already exists.");
+        return;
+      }
+      const newUser = {
+        id: `user_${Date.now()}`,
+        email,
+        password,
+        credits: 9,
+        defaultPrompt: "High quality cinematic masterpiece",
+        faceImages: [],
+      };
+      saveUsers([...users, newUser]);
+      localStorage.setItem("userId", newUser.id);
+      router.push("/dashboard");
     }
-
-    localStorage.setItem("userId", data.userId);
-    router.push("/dashboard");
   };
 
   return (
@@ -51,19 +58,19 @@ export default function AuthPage() {
         <form onSubmit={handleAuth} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
             <label className="input-label">Email Address</label>
-            <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="email" placeholder="you@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
           </div>
           <div>
             <label className="input-label">Password</label>
-            <input type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <input type="password" placeholder="••••••••" required value={password} onChange={e => setPassword(e.target.value)} />
           </div>
 
           {error && (
             <div style={{ color: "var(--accent-pink)", fontSize: "14px", textAlign: "center" }}>{error}</div>
           )}
 
-          <button type="submit" className="btn-primary" style={{ marginTop: "12px" }} disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up — Free"}
+          <button type="submit" className="btn-primary" style={{ marginTop: "12px" }}>
+            {isLogin ? "Sign In" : "Sign Up — Free"}
           </button>
         </form>
 

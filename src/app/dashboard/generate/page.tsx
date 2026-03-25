@@ -3,11 +3,12 @@ import React, { useEffect, useState } from "react";
 import { UploadCloud, Wand2, CheckCircle2, ChevronRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { authHeaders } from "@/lib/auth";
+import { getCurrentUser, updateCurrentUser, addThumbnail } from "@/lib/storage";
 
 export default function GeneratePage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [faceImages, setFaceImages] = useState<string[]>([]);
   const [inspiration, setInspiration] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [options, setOptions] = useState<string[]>([]);
@@ -16,56 +17,57 @@ export default function GeneratePage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
-    fetch("/api/user", { headers: authHeaders() })
-      .then((res) => res.json())
-      .then((data) => {
-        setPrompt(data.user?.defaultPrompt || "");
-      });
+    const user = getCurrentUser();
+    if (user) {
+      setPrompt(user.defaultPrompt || "");
+      setFaceImages(user.faceImages || []);
+    }
   }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setInspiration(e.target?.result as string);
-      };
+      reader.onload = (e) => setInspiration(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const handleGenerate = async () => {
-    if (!inspiration) {
-      alert("Please upload an inspiration thumbnail.");
-      return;
-    }
+    if (!inspiration) { alert("Please upload an inspiration thumbnail."); return; }
+
+    const user = getCurrentUser();
+    if (!user || user.credits < 3) { setShowUpgradeModal(true); return; }
+
     setGenerating(true);
     setOptions([]);
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({ prompt, inspirationUrl: inspiration }),
-    });
-    const data = await res.json();
-    setGenerating(false);
 
-    if (data.outOfCredits) {
-      setShowUpgradeModal(true);
-    } else if (data.error) {
-      alert(data.error);
-    } else {
-      setOptions(data.options);
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, inspirationUrl: inspiration, faceImages }),
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+      } else {
+        // Deduct credits only on success
+        updateCurrentUser({ credits: user.credits - 3 });
+        setOptions(data.options);
+      }
+    } catch {
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const handleSelectAndSave = async () => {
+  const handleSelectAndSave = () => {
     if (selectedOption === null) return;
     setSaving(true);
-    await fetch("/api/thumbnails", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify({ url: options[selectedOption] })
-    });
+    addThumbnail(options[selectedOption]);
     setSaving(false);
     router.push("/dashboard");
   };
@@ -75,12 +77,10 @@ export default function GeneratePage() {
       {showUpgradeModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
           <div className="glass-card animate-fade-in" style={{ maxWidth: "460px", width: "100%", margin: "24px", textAlign: "center", padding: "40px" }}>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>
-              <Sparkles size={48} style={{ color: "var(--primary)", margin: "0 auto" }} />
-            </div>
+            <Sparkles size={48} style={{ color: "var(--primary)", margin: "0 auto 16px" }} />
             <h2 style={{ fontSize: "24px", marginBottom: "12px" }}>Free Trial Complete</h2>
             <p style={{ color: "var(--text-muted)", marginBottom: "32px", fontSize: "15px", lineHeight: "1.6" }}>
-              You've used your 3 free thumbnails. Purchase credits to keep generating.
+              You&apos;ve used your 3 free thumbnails. Purchase credits to keep generating.
             </p>
             <Link
               href="https://rzp.io/rzp/miYQJ0F"
@@ -100,6 +100,7 @@ export default function GeneratePage() {
           </div>
         </div>
       )}
+
       <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>Create New Thumbnail</h1>
       <p style={{ color: "var(--text-muted)", marginBottom: "40px" }}>Generate breathtaking thumbnails using our advanced AI.</p>
 
@@ -107,16 +108,10 @@ export default function GeneratePage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "32px" }}>
           <div className="glass-card">
             <h2 style={{ fontSize: "20px", marginBottom: "16px" }}>1. Inspiration Source</h2>
-            <label 
-              style={{ 
-                border: "2px dashed var(--border-card)", 
-                padding: "60px 40px", 
-                borderRadius: "16px", 
-                textAlign: "center",
-                cursor: "pointer",
-                position: "relative",
-                overflow: "hidden",
-                display: "block"
+            <label
+              style={{
+                border: "2px dashed var(--border-card)", padding: "60px 40px", borderRadius: "16px",
+                textAlign: "center", cursor: "pointer", position: "relative", overflow: "hidden", display: "block"
               }}
             >
               <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />
@@ -136,23 +131,20 @@ export default function GeneratePage() {
               )}
             </label>
           </div>
-          
+
           <div className="glass-card" style={{ display: "flex", flexDirection: "column" }}>
             <h2 style={{ fontSize: "20px", marginBottom: "16px" }}>2. Modify Prompt</h2>
-            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
-              Fine-tune the generation request.
-            </p>
-            <textarea 
-               rows={6}
-               value={prompt}
-               onChange={(e) => setPrompt(e.target.value)}
-               placeholder="Enter your prompt modifications..."
-               style={{ width: "100%", marginBottom: "24px", flex: 1 }}
+            <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>Fine-tune the generation request.</p>
+            <textarea
+              rows={6}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your prompt modifications..."
+              style={{ width: "100%", marginBottom: "24px", flex: 1 }}
             />
-            
-            <button 
-              className="btn-primary" 
-              onClick={handleGenerate} 
+            <button
+              className="btn-primary"
+              onClick={handleGenerate}
               disabled={generating || !inspiration}
               style={{ padding: "16px", fontSize: "18px", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}
             >
@@ -164,25 +156,24 @@ export default function GeneratePage() {
         <div className="animate-fade-in">
           <h2 style={{ fontSize: "24px", marginBottom: "16px" }}>Select Your Favorite</h2>
           <p style={{ color: "var(--text-muted)", marginBottom: "32px" }}>Choose one of the generated options below to save to your dashboard.</p>
-          
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px", marginBottom: "40px" }}>
             {options.map((opt, i) => (
-              <div 
-                key={i} 
-                className="glass-card" 
-                style={{ 
-                  padding: "8px", 
-                  cursor: "pointer", 
+              <div
+                key={i}
+                className="glass-card"
+                style={{
+                  padding: "8px", cursor: "pointer",
                   border: `2px solid ${selectedOption === i ? "var(--primary)" : "var(--border-card)"}`,
                   transform: selectedOption === i ? "scale(1.02)" : "scale(1)",
                   transition: "all 0.2s"
                 }}
                 onClick={() => setSelectedOption(i)}
               >
-                <img src={opt} alt={`Option ${i+1}`} style={{ width: "100%", borderRadius: "12px", height: "200px", objectFit: "cover" }} />
+                <img src={opt} alt={`Option ${i + 1}`} style={{ width: "100%", borderRadius: "12px", height: "200px", objectFit: "cover" }} />
                 {selectedOption === i && (
                   <div style={{ textAlign: "center", padding: "12px 0", color: "var(--primary)", fontWeight: "bold", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px" }}>
-                     <CheckCircle2 size={18} /> Selected
+                    <CheckCircle2 size={18} /> Selected
                   </div>
                 )}
               </div>
@@ -191,13 +182,13 @@ export default function GeneratePage() {
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-card)", paddingTop: "32px" }}>
             <button className="btn-outline" onClick={() => setOptions([])}>Cancel</button>
-            <button 
-               className="btn-primary" 
-               disabled={selectedOption === null || saving}
-               onClick={handleSelectAndSave}
-               style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            <button
+              className="btn-primary"
+              disabled={selectedOption === null || saving}
+              onClick={handleSelectAndSave}
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
             >
-               {saving ? "Saving..." : "Save to Dashboard"} <ChevronRight size={18} />
+              {saving ? "Saving..." : "Save to Dashboard"} <ChevronRight size={18} />
             </button>
           </div>
         </div>
