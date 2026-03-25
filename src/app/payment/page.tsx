@@ -40,9 +40,9 @@ export default function PaymentPage() {
       </div>
       
       <div className="glass-card animate-fade-in" style={{ width: "100%", maxWidth: "500px", margin: "24px", textAlign: "center" }}>
-        <h2 style={{ marginBottom: "8px", fontSize: "28px" }}>Purchase Credits</h2>
+        <h2 style={{ marginBottom: "8px", fontSize: "28px" }}>Get More Credits</h2>
         <p style={{ color: "var(--text-muted)", marginBottom: "32px", fontSize: "14px" }}>
-          You must purchase credits before generating any thumbnails.
+          You&apos;ve used your 3 free thumbnails. Purchase credits to keep generating.
         </p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "24px", marginBottom: "32px", textAlign: "left" }}>

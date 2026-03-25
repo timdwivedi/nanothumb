@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { UploadCloud, Wand2, CheckCircle2, ChevronRight, Loader2 } from "lucide-react";
+import { UploadCloud, Wand2, CheckCircle2, ChevronRight, Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function GeneratePage() {
   const [options, setOptions] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/user")
@@ -46,7 +48,9 @@ export default function GeneratePage() {
     const data = await res.json();
     setGenerating(false);
 
-    if (data.error) {
+    if (data.outOfCredits) {
+      setShowUpgradeModal(true);
+    } else if (data.error) {
       alert(data.error);
     } else {
       setOptions(data.options);
@@ -67,6 +71,34 @@ export default function GeneratePage() {
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: "1000px", margin: "0 auto" }}>
+      {showUpgradeModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
+          <div className="glass-card animate-fade-in" style={{ maxWidth: "460px", width: "100%", margin: "24px", textAlign: "center", padding: "40px" }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>
+              <Sparkles size={48} style={{ color: "var(--primary)", margin: "0 auto" }} />
+            </div>
+            <h2 style={{ fontSize: "24px", marginBottom: "12px" }}>Free Trial Complete</h2>
+            <p style={{ color: "var(--text-muted)", marginBottom: "32px", fontSize: "15px", lineHeight: "1.6" }}>
+              You've used your 3 free thumbnails. Purchase credits to keep generating.
+            </p>
+            <Link
+              href="https://rzp.io/rzp/miYQJ0F"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+              style={{ display: "block", padding: "16px", fontSize: "16px", textDecoration: "none", marginBottom: "12px" }}
+            >
+              Buy Credits
+            </Link>
+            <button
+              onClick={() => setShowUpgradeModal(false)}
+              style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: "14px", fontFamily: "inherit" }}
+            >
+              Maybe later
+            </button>
+          </div>
+        </div>
+      )}
       <h1 style={{ fontSize: "32px", marginBottom: "8px" }}>Create New Thumbnail</h1>
       <p style={{ color: "var(--text-muted)", marginBottom: "40px" }}>Generate breathtaking thumbnails using our advanced AI.</p>
 

@@ -7,14 +7,17 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(false);
   const router = useRouter();
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate authentication and redirect to payment if signup, or dashboard if login
-    if (isLogin) {
-      router.push("/dashboard");
-    } else {
-      router.push("/payment");
+    if (!isLogin) {
+      // Give new users 9 free credits (3 free thumbnail generations)
+      await fetch("/api/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits: 9 }),
+      });
     }
+    router.push("/dashboard");
   };
 
   return (

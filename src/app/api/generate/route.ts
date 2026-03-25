@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   const user = db.users[0]; // mock u1
   
   if (user.credits < 3) {
-    return NextResponse.json({ error: "Insufficient credits. Generating requires 3 credits." }, { status: 400 });
+    return NextResponse.json({ error: "You've used all your free thumbnails.", outOfCredits: true }, { status: 400 });
   }
 
   // Deduct 3 credits

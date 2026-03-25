@@ -68,7 +68,7 @@ export default function DashboardLayout({
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--accent-orange)", fontSize: "14px", fontWeight: "bold" }}>
                 <Coins size={16} /> {credits !== null ? credits : "..."} Credits
               </div>
-              <Link href="https://rzp.io/rzp/miYQJ0F" style={{ fontSize: "12px", color: "white", textDecoration: "underline" }} target="_blank" rel="noopener noreferrer">Buy More</Link>
+              <Link href="/payment" style={{ fontSize: "12px", color: "white", textDecoration: "underline" }}>Buy More</Link>
             </div>
           <button 
              onClick={handleSignOut}
